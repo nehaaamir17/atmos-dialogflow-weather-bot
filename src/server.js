@@ -23,6 +23,7 @@ server.listen(config.port, '0.0.0.0', () => {
     port: config.port,
     environment: config.nodeEnv,
     weatherConfigured: Boolean(config.openWeatherApiKey),
+    weatherProvider: config.openWeatherApiKey ? 'openweather' : 'open-meteo',
   });
 });
 

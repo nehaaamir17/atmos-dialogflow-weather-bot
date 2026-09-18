@@ -157,10 +157,15 @@ export function createApp({
         return;
       }
       if (request.method === 'GET' && url.pathname === '/readyz') {
-        const ready = Boolean(config.openWeatherApiKey);
+        const ready = Boolean(config.openWeatherApiKey || config.openMeteoFallback !== false);
+        const provider = config.openWeatherApiKey ? 'openweather' : 'open-meteo';
         sendJson(response, ready ? 200 : 503, {
           status: ready ? 'ready' : 'not_ready',
-          checks: { openWeatherApiKey: ready },
+          provider: ready ? provider : 'none',
+          checks: {
+            openWeatherApiKey: Boolean(config.openWeatherApiKey),
+            openMeteoFallback: config.openMeteoFallback !== false,
+          },
         });
         return;
       }

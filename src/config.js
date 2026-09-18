@@ -2,6 +2,11 @@ import { AppError } from './errors.js';
 
 const VALID_UNITS = new Set(['standard', 'metric', 'imperial']);
 
+function booleanSetting(value, fallback = true) {
+  if (value === undefined || value === '') return fallback;
+  return !['0', 'false', 'no', 'off'].includes(String(value).trim().toLowerCase());
+}
+
 function positiveInteger(value, fallback, name) {
   const parsed = Number.parseInt(value ?? '', 10);
   if (Number.isNaN(parsed)) return fallback;
@@ -44,6 +49,7 @@ export function loadConfig(env = process.env) {
     port: positiveInteger(env.PORT, 8080, 'PORT'),
     nodeEnv: env.NODE_ENV || 'development',
     openWeatherApiKey: env.OPENWEATHER_API_KEY?.trim() || '',
+    openMeteoFallback: booleanSetting(env.OPEN_METEO_FALLBACK, true),
     units,
     language: (env.WEATHER_LANGUAGE || 'en').trim().slice(0, 5),
     defaultTimeZone,
@@ -64,4 +70,3 @@ export function loadConfig(env = process.env) {
     ),
   });
 }
-
