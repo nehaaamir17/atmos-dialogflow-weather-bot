@@ -1,6 +1,6 @@
 # Dialogflow ES Weather Info & Forecast Bot
 
-A submission-ready Google Dialogflow ES agent and REST fulfillment service that returns current weather for any city and daily forecasts within OpenWeather's eight-day horizon.
+A submission-ready Google Dialogflow ES agent and REST fulfillment service that returns current weather for any city and daily forecasts across an eight-day horizon.
 
 ![Atmos weather operations dashboard](docs/assets/atmos-dashboard.png)
 
@@ -23,20 +23,23 @@ sequenceDiagram
     actor User
     participant DF as Dialogflow ES
     participant API as Weather webhook
-    participant OW as OpenWeather
+    participant OW as OpenWeather Free APIs
+    participant OM as Open-Meteo
     User->>DF: Current weather / forecast request
     DF->>DF: Extract @sys.geo-city and @sys.date
     DF->>API: POST /webhook (WebhookRequest)
     API->>API: Validate request, session date, 8-day horizon
     API->>OW: Geocode city (cached 24h)
     OW-->>API: Coordinates
-    API->>OW: One Call 3.0 (cached 5m)
-    OW-->>API: Current + 8 daily forecasts + alerts
+    API->>OW: Current conditions (cached 5m)
+    OW-->>API: Live current weather
+    API->>OM: 8-day forecast (cached 5m)
+    OM-->>API: Timezone-aware daily forecast
     API-->>DF: WebhookResponse
     DF-->>User: Human-readable weather result
 ```
 
-The request path is `Dialogflow ES → HTTPS webhook → OpenWeather Geocoding API → OpenWeather One Call 3.0`. One Call 3.0 is used because it returns current conditions and eight daily forecast entries from one weather request.
+The default request path is `Dialogflow ES → HTTPS webhook → OpenWeather free Geocoding/Current Weather APIs + Open-Meteo eight-day forecast`. It requires no paid subscription. An optional `OPENWEATHER_ONE_CALL_ENABLED=true` mode remains available for evaluators who already have a separately activated One Call subscription.
 
 ## Repository contents
 
@@ -52,12 +55,12 @@ The request path is `Dialogflow ES → HTTPS webhook → OpenWeather Geocoding A
 
 ## Quick start
 
-Prerequisites: Node.js 20+ and an OpenWeather API key with the **One Call by Call** subscription enabled. OpenWeather includes 1,000 One Call 3.0 requests per day at no charge under that subscription, but it must still be activated on the account.
+Prerequisites: Node.js 20+ and a free OpenWeather API key. No paid weather subscription is required.
 
 ```bash
 cp .env.example .env
-# Put your key in .env as OPENWEATHER_API_KEY. When it is absent, the local
-# demo automatically uses the keyless Open-Meteo fallback.
+# Put the free key in .env as OPENWEATHER_API_KEY.
+# Keep OPENWEATHER_ONE_CALL_ENABLED=false and OPEN_METEO_FALLBACK=true.
 npm install
 npm test
 npm start
@@ -103,7 +106,7 @@ Dialogflow export files intentionally do not contain a deployment URL or secret.
 
 1. Push this repository to a public GitHub repository.
 2. In Railway, choose **New Project → Deploy from GitHub repo**.
-3. Add `OPENWEATHER_API_KEY` and optionally `WEBHOOK_SECRET`, `DEFAULT_TIME_ZONE`, and `WEATHER_UNITS` under Variables.
+3. Add `OPENWEATHER_API_KEY`, keep `OPENWEATHER_ONE_CALL_ENABLED=false`, and optionally add `WEBHOOK_SECRET`, `DEFAULT_TIME_ZONE`, and `WEATHER_UNITS` under Variables.
 4. Railway uses the included `Dockerfile`, listens on its injected `PORT`, and checks `/healthz`.
 5. Generate a public domain and use `https://YOUR-DOMAIN/webhook` in Dialogflow Fulfillment.
 
@@ -125,7 +128,7 @@ The same container works on Render, Fly.io, Cloud Run, or any Node/Docker host w
 
 Dialogflow normalizes `@sys.date` values before the request reaches the webhook. The API also derives “today” from the integration's session payload when a valid IANA time zone is present (`originalDetectIntentRequest.payload.timeZone` and common platform variants). It falls back to `DEFAULT_TIME_ZONE`, matching the Dialogflow agent's default of UTC unless configured otherwise.
 
-The inclusive supported window is today through today + 7 days. This yields exactly eight calendar days and matches the eight daily entries returned by One Call 3.0. A requested start date is filtered from those entries; the response ends at the provider horizon.
+The inclusive supported window is today through today + 7 days. This yields exactly eight calendar days. A requested start date is filtered from the provider data and the response ends at the eight-day horizon.
 
 ## Reliability and security choices
 
@@ -134,11 +137,12 @@ The inclusive supported window is today through today + 7 days. This yields exac
 - API keys stay server-side and the logger recursively redacts known credential fields.
 - Optional constant-time webhook secret verification prevents unauthenticated fulfillment calls.
 - Per-client endpoint limits return standard HTTP 429 responses with `Retry-After` metadata.
-- An OpenWeather circuit breaker fails quickly during provider incidents and automatically probes for recovery.
+- Provider-specific circuit breakers fail quickly during incidents and automatically probe for recovery.
 - Versioned `/api/v1/weather/*` routes are available; the original paths remain compatible.
-- OpenWeather One Call 3.0 remains the primary assessment provider. A keyless
-  Open-Meteo fallback keeps local demonstrations functional before credentials
-  are configured; set `OPEN_METEO_FALLBACK=false` to require OpenWeather only.
+- The zero-cost default uses OpenWeather for city geocoding and live current
+  conditions, with Open-Meteo for the eight-day forecast and automatic failover.
+- Paid OpenWeather One Call requests are disabled by default and are made only
+  when `OPENWEATHER_ONE_CALL_ENABLED=true` is deliberately configured.
 - Webhook failures return a valid Dialogflow text response with HTTP 200 so users receive a useful message instead of a generic fulfillment error.
 - Request bodies are capped at Dialogflow's 64 KiB webhook response/request scale.
 - Graceful shutdown, health probes, structured JSON logs, input encoding, and security headers are included.
@@ -161,4 +165,4 @@ The tests use mocked OpenWeather responses, so they do not consume API quota or 
 
 ## Known external steps
 
-The repository cannot perform account-owned actions by itself: enabling an OpenWeather subscription, deploying into a hosting account, entering the final webhook URL in Dialogflow, recording a human voiceover, publishing a GitHub repository, or sending the submission email. Everything needed for those steps is prepared here.
+The remaining account-owned steps are deploying into a hosting account, entering the final webhook URL in Dialogflow, recording a human voiceover, and sending the submission email. Everything needed for those steps is prepared here.
