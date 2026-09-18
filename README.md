@@ -66,7 +66,7 @@ npm start
 Node.js does not load `.env` files automatically in this implementation. Use your shell, hosting platform variables, or Node's built-in flag:
 
 ```bash
-node --env-file=.env src/server.js
+npm start
 ```
 
 Open `http://localhost:8080`. Readiness changes to green when the API key is available.
