@@ -56,7 +56,8 @@ Prerequisites: Node.js 20+ and an OpenWeather API key with the **One Call by Cal
 
 ```bash
 cp .env.example .env
-# Put your key in .env as OPENWEATHER_API_KEY
+# Put your key in .env as OPENWEATHER_API_KEY. When it is absent, the local
+# demo automatically uses the keyless Open-Meteo fallback.
 npm install
 npm test
 npm start
@@ -135,6 +136,9 @@ The inclusive supported window is today through today + 7 days. This yields exac
 - Per-client endpoint limits return standard HTTP 429 responses with `Retry-After` metadata.
 - An OpenWeather circuit breaker fails quickly during provider incidents and automatically probes for recovery.
 - Versioned `/api/v1/weather/*` routes are available; the original paths remain compatible.
+- OpenWeather One Call 3.0 remains the primary assessment provider. A keyless
+  Open-Meteo fallback keeps local demonstrations functional before credentials
+  are configured; set `OPEN_METEO_FALLBACK=false` to require OpenWeather only.
 - Webhook failures return a valid Dialogflow text response with HTTP 200 so users receive a useful message instead of a generic fulfillment error.
 - Request bodies are capped at Dialogflow's 64 KiB webhook response/request scale.
 - Graceful shutdown, health probes, structured JSON logs, input encoding, and security headers are included.

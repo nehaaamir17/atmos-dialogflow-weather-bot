@@ -81,7 +81,7 @@ paths:
       summary: Readiness probe
       responses:
         '200':
-          description: Required configuration is present.
+          description: A weather provider is available. The response identifies OpenWeather or the Open-Meteo fallback.
         '503':
           description: Required configuration is missing.
   /metrics:
