@@ -5,6 +5,7 @@ import { CircuitBreaker } from '../src/circuit-breaker.js';
 
 const config = {
   openWeatherApiKey: 'test-key',
+  openWeatherOneCallEnabled: true,
   units: 'metric',
   language: 'en',
   upstreamTimeoutMs: 1000,
@@ -197,4 +198,53 @@ test('keeps fallback requests available after the OpenWeather circuit opens', as
   assert.equal(result.location.name, 'Karachi');
   assert.equal(result.current.weather[0].description, 'clear sky');
   assert.equal(openWeatherCircuit.snapshot().state, 'open');
+});
+
+test('uses free OpenWeather current conditions and Open-Meteo forecasts without One Call', async () => {
+  const urls = [];
+  const freeConfig = {
+    ...config,
+    openWeatherOneCallEnabled: false,
+    openMeteoFallback: true,
+  };
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.hostname === 'api.openweathermap.org' && url.pathname.includes('/geo/')) {
+      return response([{ name: 'Karachi', country: 'PK', lat: 24.86, lon: 67.01 }]);
+    }
+    if (url.pathname === '/data/2.5/weather') {
+      return response({
+        dt: 1_758_192_000,
+        timezone: 18_000,
+        main: { temp: 30, feels_like: 34, humidity: 69 },
+        wind: { speed: 3.5 },
+        visibility: 10_000,
+        sys: { sunrise: 1_758_174_000, sunset: 1_758_217_200 },
+        weather: [{ description: 'few clouds' }],
+      });
+    }
+    return response({
+      timezone: 'Asia/Karachi',
+      current: { temperature_2m: 31, weather_code: 2 },
+      daily: {
+        time: ['2026-09-18'],
+        weather_code: [2],
+        temperature_2m_min: [27],
+        temperature_2m_max: [34],
+        precipitation_probability_max: [10],
+        wind_speed_10m_max: [6],
+      },
+    });
+  };
+
+  const service = new WeatherService(freeConfig, { fetchImpl });
+  const current = await service.current('Karachi', 'en');
+  const forecast = await service.forecast('Karachi', '2026-09-18', 'en');
+  assert.equal(current.current.temp, 30);
+  assert.equal(current.current.weather[0].description, 'few clouds');
+  assert.equal(current.timezone, '+05:00');
+  assert.equal(forecast.days.length, 1);
+  assert.ok(urls.some((url) => url.pathname === '/data/2.5/weather'));
+  assert.ok(urls.some((url) => url.hostname === 'api.open-meteo.com'));
+  assert.ok(!urls.some((url) => url.pathname === '/data/3.0/onecall'));
 });
