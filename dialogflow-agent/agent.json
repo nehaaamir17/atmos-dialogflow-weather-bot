@@ -1,0 +1,28 @@
+{
+  "description": "Global current weather and eight-day forecast assistant backed by OpenWeather One Call 3.0.",
+  "language": "en",
+  "shortDescription": "Current weather and date-aware forecasts for cities worldwide.",
+  "examples": "What is the current weather?; Forecast from tomorrow for London",
+  "linkToDocs": "",
+  "displayName": "Weather Info and Forecast Bot",
+  "disableInteractionLogs": false,
+  "disableStackdriverLogs": true,
+  "defaultTimezone": "UTC",
+  "webhook": {
+    "url": "",
+    "headers": {},
+    "available": false,
+    "useForDomains": false
+  },
+  "isPrivate": true,
+  "customClassifierMode": "use.after",
+  "mlMinConfidence": 0.3,
+  "supportedLanguages": [],
+  "onePlatformApiVersion": "v2",
+  "analyzeQueryTextSentiment": false,
+  "enabledKnowledgeBaseNames": [],
+  "knowledgeServiceConfidenceAdjustment": -0.4,
+  "dialogBuilderMode": false,
+  "baseActionPackagesUrl": ""
+}
+
