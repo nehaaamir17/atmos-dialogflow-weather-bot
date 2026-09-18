@@ -1,0 +1,140 @@
+openapi: 3.1.0
+info:
+  title: Dialogflow ES Weather Bot API
+  version: 1.0.0
+  description: Webhook and demonstration API for current weather and eight-day forecasts.
+servers:
+  - url: http://localhost:8080
+    description: Local development
+paths:
+  /webhook:
+    post:
+      summary: Fulfill a Dialogflow ES webhook request
+      operationId: fulfillDialogflowWebhook
+      parameters:
+        - in: header
+          name: x-webhook-secret
+          required: false
+          schema:
+            type: string
+          description: Required only when WEBHOOK_SECRET is configured.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRequest'
+      responses:
+        '200':
+          description: Dialogflow ES WebhookResponse. Fulfillment errors are returned as friendly text with HTTP 200 so the conversation remains usable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          description: Invalid JSON or malformed request envelope.
+        '401':
+          description: Invalid webhook secret.
+  /api/v1/weather/current:
+    get:
+      summary: Get normalized current weather for a city
+      parameters:
+        - $ref: '#/components/parameters/City'
+      responses:
+        '200':
+          description: Current conditions
+        '404':
+          description: City not found
+        '429':
+          description: Per-client request limit exceeded. Inspect Retry-After.
+  /api/v1/weather/forecast:
+    get:
+      summary: Get a daily forecast within the next eight calendar days
+      parameters:
+        - $ref: '#/components/parameters/City'
+        - in: query
+          name: date
+          schema:
+            type: string
+            format: date
+          description: Start date. Defaults to today in the requested time zone.
+        - in: query
+          name: timeZone
+          schema:
+            type: string
+            example: Asia/Karachi
+      responses:
+        '200':
+          description: Daily forecast beginning on the requested date and ending at the provider's eight-day horizon.
+        '400':
+          description: Date is outside the supported forecast horizon.
+        '429':
+          description: Per-client request limit exceeded. Inspect Retry-After.
+  /healthz:
+    get:
+      summary: Liveness probe
+      responses:
+        '200':
+          description: Process is alive.
+  /readyz:
+    get:
+      summary: Readiness probe
+      responses:
+        '200':
+          description: Required configuration is present.
+        '503':
+          description: Required configuration is missing.
+  /metrics:
+    get:
+      summary: Read non-sensitive operational metrics
+      responses:
+        '200':
+          description: Request, latency, cache, provider, rate-limit, process, and circuit-breaker metrics.
+components:
+  parameters:
+    City:
+      in: query
+      name: city
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      example: Lahore, PK
+  schemas:
+    WebhookRequest:
+      type: object
+      required: [queryResult]
+      properties:
+        session:
+          type: string
+        queryResult:
+          type: object
+          required: [parameters]
+          properties:
+            action:
+              type: string
+              enum: [weather.current, weather.forecast]
+            parameters:
+              type: object
+              additionalProperties: true
+            intent:
+              type: object
+              properties:
+                displayName:
+                  type: string
+        originalDetectIntentRequest:
+          type: object
+          additionalProperties: true
+    WebhookResponse:
+      type: object
+      properties:
+        fulfillmentText:
+          type: string
+        fulfillmentMessages:
+          type: array
+          items:
+            type: object
+        outputContexts:
+          type: array
+          items:
+            type: object

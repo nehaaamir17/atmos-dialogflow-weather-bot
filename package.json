@@ -1,0 +1,24 @@
+{
+  "name": "dialogflow-es-weather-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-ready Dialogflow ES weather webhook backed by OpenWeather One Call 3.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test",
+    "check": "node scripts/check.mjs"
+  },
+  "keywords": [
+    "dialogflow-es",
+    "openweather",
+    "webhook",
+    "weather-bot"
+  ],
+  "license": "MIT"
+}
+

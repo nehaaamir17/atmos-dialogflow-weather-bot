@@ -1,0 +1,10 @@
+.git
+.gitignore
+.env
+node_modules
+coverage
+tmp
+docs
+dialogflow-agent
+test
+
