@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { WeatherService } from '../src/weather-service.js';
+import { CircuitBreaker } from '../src/circuit-breaker.js';
 
 const config = {
   openWeatherApiKey: 'test-key',
@@ -132,4 +133,68 @@ test('normalizes Open-Meteo daily arrays into the eight-day forecast contract', 
   assert.equal(result.days[0].date, '2026-09-18');
   assert.equal(result.days[1].weather[0].description, 'rain');
   assert.equal(result.days[1].pop, 0.7);
+});
+
+test('fails over when an OpenWeather key exists but One Call is not activated', async () => {
+  const urls = [];
+  const resilientConfig = { ...config, openMeteoFallback: true };
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.hostname === 'api.openweathermap.org' && url.pathname.includes('/geo/')) {
+      return response([{ name: 'Karachi', country: 'PK', lat: 24.86, lon: 67.01 }]);
+    }
+    if (url.hostname === 'api.openweathermap.org') {
+      return response({ cod: 401, message: 'One Call subscription required' }, 401);
+    }
+    return response({
+      timezone: 'Asia/Karachi',
+      current: { temperature_2m: 31, weather_code: 1 },
+      daily: {
+        time: ['2026-09-18'],
+        weather_code: [1],
+        temperature_2m_min: [27],
+        temperature_2m_max: [34],
+        precipitation_probability_max: [5],
+        wind_speed_10m_max: [6],
+      },
+    });
+  };
+
+  const service = new WeatherService(resilientConfig, { fetchImpl });
+  const result = await service.current('Karachi, PK');
+  assert.equal(result.current.weather[0].description, 'mainly clear');
+  assert.deepEqual(urls.map((url) => url.hostname), [
+    'api.openweathermap.org',
+    'api.openweathermap.org',
+    'api.open-meteo.com',
+  ]);
+});
+
+test('keeps fallback requests available after the OpenWeather circuit opens', async () => {
+  const resilientConfig = { ...config, openMeteoFallback: true };
+  const openWeatherCircuit = new CircuitBreaker({ failureThreshold: 1 });
+  const fetchImpl = async (url) => {
+    if (url.hostname === 'api.openweathermap.org') {
+      return response({ cod: 401, message: 'Invalid key' }, 401);
+    }
+    if (url.hostname === 'geocoding-api.open-meteo.com') {
+      return response({
+        results: [{ name: 'Karachi', country_code: 'PK', latitude: 24.86, longitude: 67.01 }],
+      });
+    }
+    return response({
+      timezone: 'Asia/Karachi',
+      current: { temperature_2m: 31, weather_code: 0 },
+      daily: { time: [], weather_code: [], temperature_2m_min: [], temperature_2m_max: [] },
+    });
+  };
+
+  const service = new WeatherService(resilientConfig, {
+    fetchImpl,
+    circuitBreaker: openWeatherCircuit,
+  });
+  const result = await service.current('Karachi');
+  assert.equal(result.location.name, 'Karachi');
+  assert.equal(result.current.weather[0].description, 'clear sky');
+  assert.equal(openWeatherCircuit.snapshot().state, 'open');
 });
