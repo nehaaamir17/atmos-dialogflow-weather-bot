@@ -1,0 +1,51 @@
+{
+  "id": "44444444-4444-4444-8444-444444444444",
+  "name": "Weather - Forecast",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "weather.forecast",
+      "affectedContexts": [],
+      "parameters": [
+        {
+          "id": "44444444-4444-4444-8444-444444444401",
+          "required": true,
+          "dataType": "@sys.geo-city",
+          "name": "city",
+          "value": "$city",
+          "prompts": [
+            {"lang":"en","value":"Which city would you like the forecast for?"}
+          ],
+          "isList": false
+        },
+        {
+          "id": "44444444-4444-4444-8444-444444444402",
+          "required": true,
+          "dataType": "@sys.date",
+          "name": "date",
+          "value": "$date",
+          "prompts": [
+            {"lang":"en","value":"What date should the forecast start? You can ask for any date in the next eight days."}
+          ],
+          "isList": false
+        }
+      ],
+      "messages": [
+        {"type":0,"title":"","textToSpeech":"","lang":"en","speech":[],"condition":""}
+      ],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": true,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [],
+  "conditionalResponses": [],
+  "condition": "",
+  "conditionalFollowupEvents": []
+}
+

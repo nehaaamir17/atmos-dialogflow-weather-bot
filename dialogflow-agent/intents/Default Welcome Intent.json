@@ -1,0 +1,39 @@
+{
+  "id": "11111111-1111-4111-8111-111111111111",
+  "name": "Default Welcome Intent",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "input.welcome",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [
+        {
+          "type": 0,
+          "title": "",
+          "textToSpeech": "",
+          "lang": "en",
+          "speech": [
+            "This is Weather Bot. How may I help you? I can provide current conditions or a forecast for the next eight days."
+          ],
+          "condition": ""
+        }
+      ],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [
+    { "name": "WELCOME" }
+  ],
+  "conditionalResponses": [],
+  "condition": "",
+  "conditionalFollowupEvents": []
+}
+

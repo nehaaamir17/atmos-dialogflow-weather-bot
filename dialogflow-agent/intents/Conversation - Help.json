@@ -1,0 +1,26 @@
+{
+  "id": "77777777-7777-4777-8777-777777777777",
+  "name": "Conversation - Help",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "conversation.help",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [{"type":0,"title":"","textToSpeech":"","lang":"en","speech":["I can check current weather for any city or provide a forecast starting on any date within the next eight days. Try “Current weather in Lahore” or “Forecast from tomorrow for London.”"],"condition":""}],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [],
+  "conditionalResponses": [],
+  "condition": "",
+  "conditionalFollowupEvents": []
+}
+

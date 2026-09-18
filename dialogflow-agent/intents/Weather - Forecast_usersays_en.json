@@ -1,0 +1,8 @@
+[
+  {"id":"44444444-4444-4444-8444-444444444411","data":[{"text":"Please tell me the weather forecast from ","userDefined":false},{"text":"tomorrow","alias":"date","meta":"@sys.date","userDefined":false},{"text":" for ","userDefined":false},{"text":"Lahore","alias":"city","meta":"@sys.geo-city","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"44444444-4444-4444-8444-444444444412","data":[{"text":"Forecast for ","userDefined":false},{"text":"London","alias":"city","meta":"@sys.geo-city","userDefined":false},{"text":" from ","userDefined":false},{"text":"Friday","alias":"date","meta":"@sys.date","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"44444444-4444-4444-8444-444444444413","data":[{"text":"What will the weather be in ","userDefined":false},{"text":"Paris","alias":"city","meta":"@sys.geo-city","userDefined":false},{"text":" on ","userDefined":false},{"text":"September 21","alias":"date","meta":"@sys.date","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"44444444-4444-4444-8444-444444444414","data":[{"text":"Give me the forecast","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"44444444-4444-4444-8444-444444444415","data":[{"text":"Weather forecast from ","userDefined":false},{"text":"today","alias":"date","meta":"@sys.date","userDefined":false}],"isTemplate":false,"count":0,"updated":0}
+]
+

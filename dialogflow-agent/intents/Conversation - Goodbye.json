@@ -1,0 +1,26 @@
+{
+  "id": "66666666-6666-4666-8666-666666666666",
+  "name": "Conversation - Goodbye",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": true,
+      "action": "conversation.goodbye",
+      "affectedContexts": [],
+      "parameters": [],
+      "messages": [{"type":0,"title":"","textToSpeech":"","lang":"en","speech":["Thank you for contacting Weather Bot. Goodbye!"],"condition":""}],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": false,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [],
+  "conditionalResponses": [],
+  "condition": "",
+  "conditionalFollowupEvents": []
+}
+

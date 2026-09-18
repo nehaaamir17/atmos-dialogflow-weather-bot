@@ -1,0 +1,41 @@
+{
+  "id": "33333333-3333-4333-8333-333333333333",
+  "name": "Weather - Current",
+  "auto": true,
+  "contexts": [],
+  "responses": [
+    {
+      "resetContexts": false,
+      "action": "weather.current",
+      "affectedContexts": [],
+      "parameters": [
+        {
+          "id": "33333333-3333-4333-8333-333333333301",
+          "required": true,
+          "dataType": "@sys.geo-city",
+          "name": "city",
+          "value": "$city",
+          "prompts": [
+            {"lang":"en","value":"Please provide your city."},
+            {"lang":"en","value":"Which city should I check? You can include the country for precision."}
+          ],
+          "isList": false
+        }
+      ],
+      "messages": [
+        {"type":0,"title":"","textToSpeech":"","lang":"en","speech":[],"condition":""}
+      ],
+      "defaultResponsePlatforms": {},
+      "speech": []
+    }
+  ],
+  "priority": 500000,
+  "webhookUsed": true,
+  "webhookForSlotFilling": false,
+  "fallbackIntent": false,
+  "events": [],
+  "conditionalResponses": [],
+  "condition": "",
+  "conditionalFollowupEvents": []
+}
+

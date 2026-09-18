@@ -1,0 +1,9 @@
+[
+  {"id":"33333333-3333-4333-8333-333333333311","data":[{"text":"What is the current weather?","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"33333333-3333-4333-8333-333333333312","data":[{"text":"What's the weather now?","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"33333333-3333-4333-8333-333333333313","data":[{"text":"Tell me today's weather in ","userDefined":false},{"text":"Lahore","alias":"city","meta":"@sys.geo-city","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"33333333-3333-4333-8333-333333333314","data":[{"text":"Current conditions for ","userDefined":false},{"text":"London","alias":"city","meta":"@sys.geo-city","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"33333333-3333-4333-8333-333333333315","data":[{"text":"How is the weather in ","userDefined":false},{"text":"New York","alias":"city","meta":"@sys.geo-city","userDefined":false}],"isTemplate":false,"count":0,"updated":0},
+  {"id":"33333333-3333-4333-8333-333333333316","data":[{"text":"My city is ","userDefined":false},{"text":"Karachi","alias":"city","meta":"@sys.geo-city","userDefined":false}],"isTemplate":false,"count":0,"updated":0}
+]
+
