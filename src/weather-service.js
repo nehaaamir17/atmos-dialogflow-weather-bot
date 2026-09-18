@@ -90,6 +90,7 @@ export class WeatherService {
     this.cache = options.cache ?? new TtlCache();
     this.metrics = options.metrics;
     this.circuitBreaker = options.circuitBreaker ?? new CircuitBreaker();
+    this.fallbackCircuitBreaker = options.fallbackCircuitBreaker ?? new CircuitBreaker();
   }
 
   assertConfigured() {
@@ -103,7 +104,10 @@ export class WeatherService {
   }
 
   async fetchJson(url, provider = 'openweather') {
-    return this.circuitBreaker.execute(async () => {
+    const circuitBreaker = provider === 'open-meteo'
+      ? this.fallbackCircuitBreaker
+      : this.circuitBreaker;
+    return circuitBreaker.execute(async () => {
       let lastError;
       for (let attempt = 0; attempt < 2; attempt += 1) {
         try {
@@ -154,7 +158,16 @@ export class WeatherService {
 
   async geocode(city) {
     this.assertConfigured();
-    const provider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    const primaryProvider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    try {
+      return await this.geocodeWithProvider(city, primaryProvider);
+    } catch (error) {
+      if (primaryProvider !== 'openweather' || !fallbackEnabled(this.config)) throw error;
+      return this.geocodeWithProvider(city, 'open-meteo');
+    }
+  }
+
+  async geocodeWithProvider(city, provider) {
     const key = `geo:${provider}:${city.toLocaleLowerCase('en-US')}`;
     const cached = this.cache.get(key);
     this.metrics?.recordCache(Boolean(cached));
@@ -217,7 +230,16 @@ export class WeatherService {
 
   async oneCall(location, language) {
     this.assertConfigured();
-    const provider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    const primaryProvider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    try {
+      return await this.oneCallWithProvider(location, language, primaryProvider);
+    } catch (error) {
+      if (primaryProvider !== 'openweather' || !fallbackEnabled(this.config)) throw error;
+      return this.oneCallWithProvider(location, language, 'open-meteo');
+    }
+  }
+
+  async oneCallWithProvider(location, language, provider) {
     const cacheKey = [
       'weather',
       provider,
