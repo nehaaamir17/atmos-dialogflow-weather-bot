@@ -49,6 +49,7 @@ export function loadConfig(env = process.env) {
     port: positiveInteger(env.PORT, 8080, 'PORT'),
     nodeEnv: env.NODE_ENV || 'development',
     openWeatherApiKey: env.OPENWEATHER_API_KEY?.trim() || '',
+    openWeatherOneCallEnabled: booleanSetting(env.OPENWEATHER_ONE_CALL_ENABLED, false),
     openMeteoFallback: booleanSetting(env.OPEN_METEO_FALLBACK, true),
     units,
     language: (env.WEATHER_LANGUAGE || 'en').trim().slice(0, 5),

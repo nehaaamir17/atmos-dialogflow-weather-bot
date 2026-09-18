@@ -4,6 +4,7 @@ import { dateInTimeZone } from './time.js';
 import { CircuitBreaker } from './circuit-breaker.js';
 
 const GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+const CURRENT_URL = 'https://api.openweathermap.org/data/2.5/weather';
 const ONE_CALL_URL = 'https://api.openweathermap.org/data/3.0/onecall';
 const OPEN_METEO_GEO_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const OPEN_METEO_FORECAST_URL = 'https://api.open-meteo.com/v1/forecast';
@@ -70,6 +71,15 @@ function at(values, index) {
 function toConfiguredTemperature(value, units) {
   if (!Number.isFinite(value)) return value;
   return units === 'standard' ? value + 273.15 : value;
+}
+
+function fixedOffsetTimeZone(offsetSeconds = 0) {
+  const totalMinutes = Math.round(offsetSeconds / 60);
+  const sign = totalMinutes < 0 ? '-' : '+';
+  const absoluteMinutes = Math.abs(totalMinutes);
+  const hours = String(Math.floor(absoluteMinutes / 60)).padStart(2, '0');
+  const minutes = String(absoluteMinutes % 60).padStart(2, '0');
+  return `${sign}${hours}:${minutes}`;
 }
 
 function parseCityQuery(city) {
@@ -230,7 +240,17 @@ export class WeatherService {
 
   async oneCall(location, language) {
     this.assertConfigured();
-    const primaryProvider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    const useOpenWeather = Boolean(
+      this.config.openWeatherApiKey && this.config.openWeatherOneCallEnabled,
+    );
+    if (!useOpenWeather && !fallbackEnabled(this.config)) {
+      throw new AppError('The eight-day forecast provider is not configured.', {
+        code: 'WEATHER_NOT_CONFIGURED',
+        status: 503,
+        expose: true,
+      });
+    }
+    const primaryProvider = useOpenWeather ? 'openweather' : 'open-meteo';
     try {
       return await this.oneCallWithProvider(location, language, primaryProvider);
     } catch (error) {
@@ -320,9 +340,60 @@ export class WeatherService {
     return this.cache.set(cacheKey, weather, this.config.weatherCacheTtlMs);
   }
 
+  async openWeatherCurrent(location, language) {
+    const cacheKey = [
+      'current',
+      'openweather',
+      location.lat.toFixed(4),
+      location.lon.toFixed(4),
+      this.config.units,
+      language,
+    ].join(':');
+    const cached = this.cache.get(cacheKey);
+    this.metrics?.recordCache(Boolean(cached));
+    if (cached) return cached;
+
+    const url = new URL(CURRENT_URL);
+    url.searchParams.set('lat', String(location.lat));
+    url.searchParams.set('lon', String(location.lon));
+    url.searchParams.set('units', this.config.units);
+    url.searchParams.set('lang', cleanLanguage(language || this.config.language));
+    url.searchParams.set('appid', this.config.openWeatherApiKey);
+    const payload = await this.fetchJson(url, 'openweather');
+    const current = {
+      dt: payload?.dt,
+      temp: payload?.main?.temp,
+      feels_like: payload?.main?.feels_like,
+      humidity: payload?.main?.humidity,
+      wind_speed: payload?.wind?.speed,
+      visibility: payload?.visibility,
+      sunrise: payload?.sys?.sunrise,
+      sunset: payload?.sys?.sunset,
+      weather: Array.isArray(payload?.weather) ? payload.weather : [],
+    };
+    const weather = {
+      timezone: fixedOffsetTimeZone(payload?.timezone),
+      current,
+      daily: [],
+      alerts: [],
+      provider: 'openweather-current',
+    };
+    return this.cache.set(cacheKey, weather, this.config.weatherCacheTtlMs);
+  }
+
   async current(city, language) {
     const location = await this.geocode(city);
-    const data = await this.oneCall(location, language);
+    let data;
+    if (this.config.openWeatherApiKey && !this.config.openWeatherOneCallEnabled) {
+      try {
+        data = await this.openWeatherCurrent(location, language);
+      } catch (error) {
+        if (!fallbackEnabled(this.config)) throw error;
+        data = await this.oneCallWithProvider(location, language, 'open-meteo');
+      }
+    } else {
+      data = await this.oneCall(location, language);
+    }
     if (!data?.current) {
       throw new AppError('Current weather data was missing from the provider response.', {
         code: 'WEATHER_DATA_MISSING',

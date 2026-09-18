@@ -157,13 +157,22 @@ export function createApp({
         return;
       }
       if (request.method === 'GET' && url.pathname === '/readyz') {
-        const ready = Boolean(config.openWeatherApiKey || config.openMeteoFallback !== false);
-        const provider = config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+        const oneCallReady = Boolean(
+          config.openWeatherApiKey && config.openWeatherOneCallEnabled,
+        );
+        const fallbackReady = config.openMeteoFallback !== false;
+        const ready = oneCallReady || fallbackReady;
+        const provider = oneCallReady
+          ? 'openweather'
+          : config.openWeatherApiKey && fallbackReady
+            ? 'hybrid-free'
+            : fallbackReady ? 'open-meteo' : 'none';
         sendJson(response, ready ? 200 : 503, {
           status: ready ? 'ready' : 'not_ready',
-          provider: ready ? provider : 'none',
+          provider,
           checks: {
             openWeatherApiKey: Boolean(config.openWeatherApiKey),
+            openWeatherOneCallEnabled: config.openWeatherOneCallEnabled,
             openMeteoFallback: config.openMeteoFallback !== false,
           },
         });
