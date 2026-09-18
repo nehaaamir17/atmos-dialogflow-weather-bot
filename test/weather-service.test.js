@@ -58,3 +58,78 @@ test('returns a safe city-not-found error', async () => {
   });
 });
 
+test('uses the Open-Meteo fallback when an OpenWeather key is unavailable', async () => {
+  const urls = [];
+  const fallbackConfig = { ...config, openWeatherApiKey: '', openMeteoFallback: true };
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.hostname === 'geocoding-api.open-meteo.com') {
+      return response({
+        results: [{
+          name: 'Karachi', admin1: 'Sindh', country_code: 'PK',
+          latitude: 24.86, longitude: 67.01,
+        }],
+      });
+    }
+    return response({
+      timezone: 'Asia/Karachi',
+      current: {
+        temperature_2m: 31.4,
+        apparent_temperature: 35.2,
+        relative_humidity_2m: 67,
+        weather_code: 2,
+        wind_speed_10m: 4.1,
+        visibility: 9000,
+      },
+      daily: {
+        time: ['2026-09-18'],
+        weather_code: [2],
+        temperature_2m_min: [27],
+        temperature_2m_max: [34],
+        precipitation_probability_max: [20],
+        wind_speed_10m_max: [7.2],
+      },
+    });
+  };
+
+  const service = new WeatherService(fallbackConfig, { fetchImpl });
+  const result = await service.current('Karachi, PK');
+  assert.equal(result.location.name, 'Karachi');
+  assert.equal(result.location.country, 'PK');
+  assert.equal(result.timezone, 'Asia/Karachi');
+  assert.equal(result.current.weather[0].description, 'partly cloudy');
+  assert.equal(urls[0].searchParams.get('name'), 'Karachi');
+  assert.equal(urls[0].searchParams.get('countryCode'), 'PK');
+  assert.equal(urls[1].hostname, 'api.open-meteo.com');
+  assert.equal(urls[1].searchParams.get('forecast_days'), '8');
+});
+
+test('normalizes Open-Meteo daily arrays into the eight-day forecast contract', async () => {
+  const fallbackConfig = { ...config, openWeatherApiKey: '', openMeteoFallback: true };
+  const fetchImpl = async (url) => {
+    if (url.hostname === 'geocoding-api.open-meteo.com') {
+      return response({
+        results: [{ name: 'Karachi', country_code: 'PK', latitude: 24.86, longitude: 67.01 }],
+      });
+    }
+    return response({
+      timezone: 'Asia/Karachi',
+      current: { temperature_2m: 31, weather_code: 0 },
+      daily: {
+        time: ['2026-09-18', '2026-09-19'],
+        weather_code: [0, 61],
+        temperature_2m_min: [27, 26],
+        temperature_2m_max: [34, 33],
+        precipitation_probability_max: [5, 70],
+        wind_speed_10m_max: [6, 8],
+      },
+    });
+  };
+
+  const service = new WeatherService(fallbackConfig, { fetchImpl });
+  const result = await service.forecast('Karachi', '2026-09-18');
+  assert.equal(result.days.length, 2);
+  assert.equal(result.days[0].date, '2026-09-18');
+  assert.equal(result.days[1].weather[0].description, 'rain');
+  assert.equal(result.days[1].pop, 0.7);
+});
