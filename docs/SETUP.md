@@ -1,16 +1,19 @@
 # End-to-end setup
 
-## 1. Activate OpenWeather One Call 3.0
+## 1. Configure the free weather providers
 
 1. Create or sign in to an OpenWeather account.
 2. Create an API key.
-3. Subscribe to **One Call by Call**. The plan includes a daily no-charge allowance but requires activation and billing details on OpenWeather.
-4. Wait for a new key to activate; OpenWeather keys may not work immediately.
+3. Do not activate One Call or enter payment details. The application uses the free Current Weather API.
+4. Keep the Open-Meteo forecast enabled for the eight-day forecast.
+5. Wait for a new key to activate; OpenWeather keys may not work immediately.
 
 Set variables locally in PowerShell:
 
 ```powershell
 $env:OPENWEATHER_API_KEY = "YOUR_KEY"
+$env:OPENWEATHER_ONE_CALL_ENABLED = "false"
+$env:OPEN_METEO_FALLBACK = "true"
 $env:PORT = "8080"
 $env:DEFAULT_TIME_ZONE = "UTC"
 npm start
@@ -50,7 +53,7 @@ Copy the HTTPS forwarding URL, append `/webhook`, and keep ngrok running during 
 
 1. Push the repository to GitHub.
 2. Create a Railway project from the repository.
-3. Add `OPENWEATHER_API_KEY` as a Railway variable.
+3. Add `OPENWEATHER_API_KEY`, `OPENWEATHER_ONE_CALL_ENABLED=false`, and `OPEN_METEO_FALLBACK=true` as Railway variables.
 4. Optional: create a long random `WEBHOOK_SECRET` and add it as a second variable.
 5. Generate the Railway public domain.
 6. Check `https://YOUR-DOMAIN/healthz` and `https://YOUR-DOMAIN/readyz`.
@@ -84,7 +87,6 @@ Also demonstrate one controlled error:
 Before recording, verify all four checks:
 
 - `/healthz` returns HTTP 200.
-- `/readyz` returns HTTP 200 and `openWeatherApiKey: true`.
+- `/readyz` returns HTTP 200 with provider `hybrid-free`, `openWeatherApiKey: true`, and `openWeatherOneCallEnabled: false`.
 - The dashboard returns current and forecast data.
 - Both Dialogflow weather intents display webhook results without a fulfillment error.
-

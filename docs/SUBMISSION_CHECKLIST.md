@@ -4,10 +4,10 @@ Complete this list in order on the day of submission.
 
 ## Product verification
 
-- [ ] OpenWeather One Call by Call is active and the key works.
+- [ ] Free OpenWeather key works; no billing subscription is enabled.
 - [ ] Public base URL loads the dashboard over HTTPS.
 - [ ] `/healthz` returns HTTP 200.
-- [ ] `/readyz` returns HTTP 200 with `openWeatherApiKey: true`.
+- [ ] `/readyz` returns HTTP 200 with provider `hybrid-free` and `openWeatherApiKey: true`.
 - [ ] Dialogflow Fulfillment URL is `https://YOUR-HOST/webhook`.
 - [ ] Optional `x-webhook-secret` values match in Dialogflow and hosting variables.
 - [ ] Dialogflow agent training has completed.
@@ -70,4 +70,3 @@ YOUR NAME
 - [ ] Include the live dashboard/API base URL.
 - [ ] Include the narrated demo video link.
 - [ ] Send within seven days of receipt acknowledgement, preferably earlier if requested.
-

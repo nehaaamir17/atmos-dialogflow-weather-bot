@@ -39,7 +39,7 @@ Narrate:
 
 ## 3:05–3:40 — Date and timezone behavior
 
-> The webhook treats “today” using the session or integration time zone when available, with a configured agent fallback. It accepts today through seven days after today, which is an inclusive eight-day window matching OpenWeather One Call 3.0. Requests in the past or beyond that horizon receive a clear corrective response.
+> The webhook treats “today” using the session or integration time zone when available, with a configured agent fallback. It accepts today through seven days after today, which is an inclusive eight-day window. Requests in the past or beyond that horizon receive a clear corrective response.
 
 Demonstrate one out-of-range date.
 
@@ -59,4 +59,3 @@ npm test
 > The public repository includes the source, importable Dialogflow agent ZIP, deployment files, API contract, setup guide, requirements traceability, and this narrated demo script. Thank you for reviewing the project.
 
 End on the repository README or dashboard with the public URL visible.
-
