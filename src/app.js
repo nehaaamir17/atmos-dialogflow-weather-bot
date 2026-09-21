@@ -184,6 +184,17 @@ export function createApp({
         }) ?? { status: 'metrics_not_configured' });
         return;
       }
+      if (request.method === 'GET' && url.pathname === '/webhook') {
+        sendJson(response, 200, {
+          status: 'ready',
+          service: 'dialogflow-es-weather-webhook',
+          message: 'Webhook is active. Dialogflow ES sends POST requests to this URL.',
+          expectedMethod: 'POST',
+          health: '/readyz',
+          documentation: '/openapi.yaml',
+        });
+        return;
+      }
       if (request.method === 'POST' && url.pathname === '/webhook') {
         enforceRateLimit(request, response, rateLimiter, metrics, 'webhook', {
           limit: 120, windowMs: 60_000,
