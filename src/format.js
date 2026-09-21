@@ -60,7 +60,12 @@ export function formatForecast(result) {
   const labels = UNIT_LABELS[result.units] || UNIT_LABELS.metric;
   const rows = result.days.map((day) => {
     const probability = Math.round((day.pop || 0) * 100);
-    return `• ${friendlyDate(day.date, result.timezone)}: ${condition(day)}; ${rounded(day.temp?.min)}–${rounded(day.temp?.max)}${labels.temperature}; rain ${probability}%; humidity ${rounded(day.humidity)}%; wind ${rounded(day.wind_speed)} ${labels.wind}.`;
+    const details = [
+      `rain ${probability}%`,
+      Number.isFinite(day.humidity) ? `humidity ${rounded(day.humidity)}%` : null,
+      `wind ${rounded(day.wind_speed)} ${labels.wind}`,
+    ].filter(Boolean).join('; ');
+    return `• ${friendlyDate(day.date, result.timezone)}: ${condition(day)}; ${rounded(day.temp?.min)}–${rounded(day.temp?.max)}${labels.temperature}; ${details}.`;
   });
   const endDate = result.days.at(-1).date;
   return [
@@ -103,4 +108,3 @@ export function serializeForecast(result) {
     alerts: result.alerts.map((alert) => alert.event).filter(Boolean),
   };
 }
-

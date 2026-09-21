@@ -83,14 +83,46 @@ function fixedOffsetTimeZone(offsetSeconds = 0) {
 }
 
 function parseCityQuery(city) {
-  const [name, qualifier = ''] = city.split(',').map((part) => part.trim());
-  return { name, qualifier };
+  const [name, ...qualifiers] = city.split(',').map((part) => part.trim()).filter(Boolean);
+  return { name, qualifiers };
 }
 
 function sameText(left, right) {
   return String(left || '').localeCompare(String(right || ''), undefined, {
     sensitivity: 'accent',
   }) === 0;
+}
+
+function countryName(countryCode) {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(countryCode);
+  } catch {
+    return '';
+  }
+}
+
+function locationMatchesQualifiers(location, qualifiers) {
+  if (!qualifiers.length) return true;
+  const countryCode = String(location.country_code || location.country || '').toUpperCase();
+  const fields = [
+    location.country_code,
+    location.country,
+    countryName(countryCode),
+    location.state,
+    location.admin1,
+    location.admin2,
+  ].filter(Boolean);
+  return qualifiers.every((qualifier) => {
+    const normalized = qualifier.toUpperCase() === 'UK' ? 'GB' : qualifier;
+    return fields.some((field) => sameText(field, normalized));
+  });
+}
+
+function isRecognizedCity(result) {
+  const featureCode = String(result.feature_code || '').toUpperCase();
+  if (!featureCode) return true;
+  if (/^PPL[AC]/.test(featureCode)) return true;
+  return Number.isFinite(result.population) && result.population >= 1_000;
 }
 
 export class WeatherService {
@@ -168,12 +200,23 @@ export class WeatherService {
 
   async geocode(city) {
     this.assertConfigured();
-    const primaryProvider = this.config.openWeatherApiKey ? 'openweather' : 'open-meteo';
+    const useOpenWeatherGeocoding = Boolean(
+      this.config.openWeatherApiKey && this.config.openWeatherOneCallEnabled,
+    );
+    const primaryProvider = fallbackEnabled(this.config) && !useOpenWeatherGeocoding
+      ? 'open-meteo'
+      : 'openweather';
     try {
       return await this.geocodeWithProvider(city, primaryProvider);
     } catch (error) {
-      if (primaryProvider !== 'openweather' || !fallbackEnabled(this.config)) throw error;
-      return this.geocodeWithProvider(city, 'open-meteo');
+      if (error?.code === 'CITY_NOT_FOUND') throw error;
+      if (primaryProvider === 'open-meteo' && this.config.openWeatherApiKey) {
+        return this.geocodeWithProvider(city, 'openweather');
+      }
+      if (primaryProvider === 'openweather' && fallbackEnabled(this.config)) {
+        return this.geocodeWithProvider(city, 'open-meteo');
+      }
+      throw error;
     }
   }
 
@@ -183,29 +226,34 @@ export class WeatherService {
     this.metrics?.recordCache(Boolean(cached));
     if (cached) return cached;
 
+    const { name, qualifiers } = parseCityQuery(city);
     let match;
     if (provider === 'openweather') {
       const url = new URL(GEO_URL);
       url.searchParams.set('q', city);
-      url.searchParams.set('limit', '1');
+      url.searchParams.set('limit', qualifiers.length ? '5' : '1');
       url.searchParams.set('appid', this.config.openWeatherApiKey);
       const results = await this.fetchJson(url, provider);
-      match = Array.isArray(results) ? results[0] : undefined;
+      match = Array.isArray(results)
+        ? results.find((result) => locationMatchesQualifiers(result, qualifiers))
+        : undefined;
     } else {
-      const { name, qualifier } = parseCityQuery(city);
       const url = new URL(OPEN_METEO_GEO_URL);
       url.searchParams.set('name', name);
-      url.searchParams.set('count', qualifier ? '10' : '1');
+      url.searchParams.set('count', qualifiers.length ? '20' : '10');
       url.searchParams.set('language', cleanLanguage(this.config.language));
-      if (/^[a-z]{2}$/i.test(qualifier)) {
-        url.searchParams.set('countryCode', qualifier.toUpperCase());
+      const countryQualifier = qualifiers.at(-1);
+      if (/^[a-z]{2}$/i.test(countryQualifier || '')) {
+        const countryCode = countryQualifier.toUpperCase() === 'UK'
+          ? 'GB'
+          : countryQualifier.toUpperCase();
+        url.searchParams.set('countryCode', countryCode);
       }
       const payload = await this.fetchJson(url, provider);
       const results = Array.isArray(payload?.results) ? payload.results : [];
-      const result = qualifier
-        ? results.find((item) => [item.country_code, item.country, item.admin1]
-          .some((value) => sameText(value, qualifier))) || results[0]
-        : results[0];
+      const result = results.find((item) => (
+        locationMatchesQualifiers(item, qualifiers) && isRecognizedCity(item)
+      ));
       if (result) {
         match = {
           name: result.name,
@@ -218,7 +266,7 @@ export class WeatherService {
     }
 
     if (!match) {
-      throw new AppError(`I could not find a city named “${city}”. Please include the country if needed.`, {
+      throw new AppError(`I could not verify “${city}” as a city. Check the spelling or use City, Country Code (for example, Karachi, PK).`, {
         code: 'CITY_NOT_FOUND',
         status: 404,
         expose: true,
@@ -298,6 +346,7 @@ export class WeatherService {
         'weather_code',
         'temperature_2m_max',
         'temperature_2m_min',
+        'relative_humidity_2m_mean',
         'precipitation_probability_max',
         'wind_speed_10m_max',
       ].join(','));
@@ -331,6 +380,7 @@ export class WeatherService {
           pop: Number.isFinite(at(daily.precipitation_probability_max, index))
             ? at(daily.precipitation_probability_max, index) / 100
             : 0,
+          humidity: at(daily.relative_humidity_2m_mean, index),
           wind_speed: at(daily.wind_speed_10m_max, index),
           weather: [{ description: weatherDescription(at(daily.weather_code, index)) }],
         })),
