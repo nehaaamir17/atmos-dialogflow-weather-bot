@@ -102,22 +102,21 @@ curl -X POST http://localhost:8080/webhook \
 
 Dialogflow export files intentionally do not contain a deployment URL or secret. Those values are account-specific and must be configured after deployment.
 
-## Deploy publicly for free on Render
+## Deploy publicly for free on Vercel
 
-The repository includes `render.yaml` for a repeatable free deployment with
-managed HTTPS and automatic deploys from `main`.
+The repository includes a Vercel Node Function adapter and routing configuration,
+so the dashboard, REST endpoints, and Dialogflow webhook share one public HTTPS
+domain. The Hobby plan has no billing cycle and requires no paid weather service.
 
-1. Open Render and choose **New → Blueprint**.
-2. Connect this GitHub repository and select the `main` branch.
-3. Enter the existing free OpenWeather key when Render requests
-   `OPENWEATHER_API_KEY`. Do not add a payment method or activate One Call.
-4. Apply the Blueprint and wait for `/healthz` to pass.
-5. Copy the assigned `https://YOUR-SERVICE.onrender.com` URL.
-6. Configure Dialogflow Fulfillment as
-   `https://atmos-dialogflow-weather-bot.onrender.com/webhook`.
+1. Import this GitHub repository at `https://vercel.com/new`.
+2. Keep the detected **Other** framework and repository root settings.
+3. Add `OPENWEATHER_API_KEY` using the existing free OpenWeather key.
+4. Add `OPENWEATHER_ONE_CALL_ENABLED=false` and `OPEN_METEO_FALLBACK=true`.
+5. Deploy and verify `/healthz`, `/readyz`, current weather, and forecast.
+6. Configure Dialogflow Fulfillment as `https://YOUR-PROJECT.vercel.app/webhook`.
 
-Free Render services sleep after 15 minutes without traffic and wake on the next
-request. Open the dashboard shortly before a demonstration so the bot is warm.
+Vercel deployments use the serverless entry point in `api/index.js`; local and
+Docker deployments continue to use `src/server.js` without behavior differences.
 
 ## Alternative deployment on Railway
 
