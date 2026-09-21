@@ -4,10 +4,18 @@ info:
   version: 1.0.0
   description: Webhook and demonstration API for current weather and eight-day forecasts.
 servers:
+  - url: https://atmos-dialogflow-weather-bot.vercel.app
+    description: Production
   - url: http://localhost:8080
     description: Local development
 paths:
   /webhook:
+    get:
+      summary: Verify that the Dialogflow webhook endpoint is online
+      operationId: inspectDialogflowWebhook
+      responses:
+        '200':
+          description: Browser-friendly webhook readiness and usage information.
     post:
       summary: Fulfill a Dialogflow ES webhook request
       operationId: fulfillDialogflowWebhook
