@@ -4,7 +4,7 @@ Target length: 4–6 minutes. Record both screen and microphone audio, as requir
 
 ## 0:00–0:30 — Introduction
 
-> Hello, this is my Dialogflow ES Weather Info and Forecast Bot. It provides current global weather and date-aware forecasts within the next eight days. Dialogflow handles intent recognition and slot filling, my REST API handles validation and fulfillment, and OpenWeather provides geocoding and weather data.
+> Hello, this is my Dialogflow ES Weather Info and Forecast Bot. It provides current global weather and date-aware forecasts within the next eight days. Dialogflow handles intent recognition and slot filling, my REST API handles validation and fulfillment, Open-Meteo verifies the requested city, OpenWeather supplies current conditions, and Open-Meteo supplies the eight-day forecast without a paid subscription.
 
 Show the repository root and the deployed dashboard URL.
 
@@ -35,7 +35,7 @@ Type each message slowly and allow each response to finish:
 
 Narrate:
 
-> The first weather request demonstrates slot filling: the original utterance omits the city, Dialogflow asks for it, and the completed request reaches the webhook. The response contains current temperature, feels-like temperature, humidity, wind, visibility, sunrise, sunset, and any active alerts. The second request shows natural-language date extraction and returns daily results from the requested date through the available eight-day horizon.
+> The first weather request demonstrates slot filling: the original utterance omits the city, Dialogflow asks for it, and the completed request reaches the webhook. The service verifies the city and country qualifier, shows the location it interpreted, then returns current temperature, feels-like temperature, humidity, wind, visibility, sunrise, sunset, and any active alerts. The second request shows natural-language date extraction and returns daily results from the requested date through the available eight-day horizon.
 
 ## 3:05–3:40 — Date and timezone behavior
 
@@ -52,7 +52,7 @@ npm run check
 npm test
 ```
 
-> Automated tests cover session timezone extraction, date normalization, the eight-day boundary, current and forecast fulfillment, URL parameter encoding, caching, and safe upstream errors. Tests mock OpenWeather, so they are deterministic and do not consume quota.
+> Automated tests cover session timezone extraction, date normalization, the eight-day boundary, current and forecast fulfillment, URL parameter encoding, caching, and safe upstream errors. Tests mock both weather providers, so they are deterministic and do not consume quota.
 
 ## 4:20–4:45 — Close
 

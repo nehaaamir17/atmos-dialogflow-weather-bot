@@ -3,7 +3,7 @@
 ## Trust boundaries
 
 - Dialogflow and dashboard clients are untrusted inputs.
-- OpenWeather is an external dependency with a bounded request budget.
+- OpenWeather and Open-Meteo are external dependencies with bounded request budgets.
 - `OPENWEATHER_API_KEY` and `WEBHOOK_SECRET` remain server-side environment variables.
 - The service is stateless and stores no end-user profiles, credentials, or conversation transcripts.
 
@@ -28,4 +28,3 @@
 - Keep the service behind the hosting provider's HTTPS proxy.
 - Treat in-memory rate limiting as single-instance protection. For horizontal scaling, replace it with a shared Redis-backed limiter.
 - Monitor provider failures and circuit state through `/metrics` and structured logs.
-
