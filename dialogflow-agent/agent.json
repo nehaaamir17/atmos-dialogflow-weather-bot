@@ -1,5 +1,5 @@
 {
-  "description": "Global current weather and eight-day forecast assistant backed by OpenWeather One Call 3.0.",
+  "description": "Global current weather and eight-day forecast assistant backed by a secure REST webhook.",
   "language": "en",
   "shortDescription": "Current weather and date-aware forecasts for cities worldwide.",
   "examples": "What is the current weather?; Forecast from tomorrow for London",
@@ -25,4 +25,3 @@
   "dialogBuilderMode": false,
   "baseActionPackagesUrl": ""
 }
-
