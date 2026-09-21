@@ -102,7 +102,24 @@ curl -X POST http://localhost:8080/webhook \
 
 Dialogflow export files intentionally do not contain a deployment URL or secret. Those values are account-specific and must be configured after deployment.
 
-## Deploy to Railway
+## Deploy publicly for free on Render
+
+The repository includes `render.yaml` for a repeatable free deployment with
+managed HTTPS and automatic deploys from `main`.
+
+1. Open Render and choose **New → Blueprint**.
+2. Connect this GitHub repository and select the `main` branch.
+3. Enter the existing free OpenWeather key when Render requests
+   `OPENWEATHER_API_KEY`. Do not add a payment method or activate One Call.
+4. Apply the Blueprint and wait for `/healthz` to pass.
+5. Copy the assigned `https://YOUR-SERVICE.onrender.com` URL.
+6. Configure Dialogflow Fulfillment as
+   `https://atmos-dialogflow-weather-bot.onrender.com/webhook`.
+
+Free Render services sleep after 15 minutes without traffic and wake on the next
+request. Open the dashboard shortly before a demonstration so the bot is warm.
+
+## Alternative deployment on Railway
 
 1. Push this repository to a public GitHub repository.
 2. In Railway, choose **New Project → Deploy from GitHub repo**.
