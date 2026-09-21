@@ -122,6 +122,7 @@ test('normalizes Open-Meteo daily arrays into the eight-day forecast contract', 
         weather_code: [0, 61],
         temperature_2m_min: [27, 26],
         temperature_2m_max: [34, 33],
+        relative_humidity_2m_mean: [66, 71],
         precipitation_probability_max: [5, 70],
         wind_speed_10m_max: [6, 8],
       },
@@ -134,6 +135,37 @@ test('normalizes Open-Meteo daily arrays into the eight-day forecast contract', 
   assert.equal(result.days[0].date, '2026-09-18');
   assert.equal(result.days[1].weather[0].description, 'rain');
   assert.equal(result.days[1].pop, 0.7);
+  assert.equal(result.days[1].humidity, 71);
+});
+
+test('rejects a named place that is not a recognized city', async () => {
+  const strictConfig = {
+    ...config,
+    openWeatherOneCallEnabled: false,
+    openMeteoFallback: true,
+  };
+  const fetchImpl = async (url) => {
+    assert.equal(url.hostname, 'geocoding-api.open-meteo.com');
+    assert.equal(url.searchParams.get('countryCode'), 'AU');
+    return response({
+      results: [{
+        name: 'Karachi',
+        admin1: 'New South Wales',
+        country: 'Australia',
+        country_code: 'AU',
+        latitude: -36.98324,
+        longitude: 148.77701,
+        feature_code: 'PPL',
+      }],
+    });
+  };
+
+  const service = new WeatherService(strictConfig, { fetchImpl });
+  await assert.rejects(service.current('Karachi, AU'), (error) => {
+    assert.equal(error.code, 'CITY_NOT_FOUND');
+    assert.match(error.message, /could not verify/i);
+    return true;
+  });
 });
 
 test('fails over when an OpenWeather key exists but One Call is not activated', async () => {
@@ -209,6 +241,14 @@ test('uses free OpenWeather current conditions and Open-Meteo forecasts without 
   };
   const fetchImpl = async (url) => {
     urls.push(url);
+    if (url.hostname === 'geocoding-api.open-meteo.com') {
+      return response({
+        results: [{
+          name: 'Karachi', admin1: 'Sindh', country: 'Pakistan', country_code: 'PK',
+          latitude: 24.86, longitude: 67.01, feature_code: 'PPLA', population: 11_624_219,
+        }],
+      });
+    }
     if (url.hostname === 'api.openweathermap.org' && url.pathname.includes('/geo/')) {
       return response([{ name: 'Karachi', country: 'PK', lat: 24.86, lon: 67.01 }]);
     }
@@ -244,7 +284,10 @@ test('uses free OpenWeather current conditions and Open-Meteo forecasts without 
   assert.equal(current.current.weather[0].description, 'few clouds');
   assert.equal(current.timezone, '+05:00');
   assert.equal(forecast.days.length, 1);
+  assert.equal(urls[0].hostname, 'geocoding-api.open-meteo.com');
   assert.ok(urls.some((url) => url.pathname === '/data/2.5/weather'));
-  assert.ok(urls.some((url) => url.hostname === 'api.open-meteo.com'));
+  const forecastUrl = urls.find((url) => url.hostname === 'api.open-meteo.com');
+  assert.ok(forecastUrl);
+  assert.match(forecastUrl.searchParams.get('daily'), /relative_humidity_2m_mean/);
   assert.ok(!urls.some((url) => url.pathname === '/data/3.0/onecall'));
 });
