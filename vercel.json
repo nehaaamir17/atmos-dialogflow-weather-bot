@@ -1,14 +1,19 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
   "regions": ["sin1"],
-  "functions": {
-    "api/index.js": {
-      "includeFiles": ["public/**", "openapi.yaml"],
-      "maxDuration": 10
-    }
-  },
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index" }
-  ]
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "web"
+      }
+    }
+  ],
+  "services": {
+    "web": {
+      "root": ".",
+      "entrypoint": "api/index.js"
+    }
+  }
 }

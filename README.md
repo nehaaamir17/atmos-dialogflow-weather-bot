@@ -8,6 +8,15 @@ The project is deliberately easy to review and operate: it has no third-party ru
 
 The branded dashboard includes animated weather graphics, current and forecast cards, Interact CX assessment context, and four persistent themes: Midnight, Aurora, Sunrise, and Storm.
 
+## Live deployment
+
+- **Dashboard and API base:** https://atmos-dialogflow-weather-bot.vercel.app
+- **Dialogflow ES webhook:** https://atmos-dialogflow-weather-bot.vercel.app/webhook
+- **Health:** https://atmos-dialogflow-weather-bot.vercel.app/healthz
+- **OpenAPI 3.1 contract:** https://atmos-dialogflow-weather-bot.vercel.app/openapi.yaml
+
+The deployment runs on Vercel Hobby and uses only zero-cost weather endpoints.
+
 ## What the evaluator can test
 
 - **Current weather:** “What is the current weather?” → bot asks for a city → “My city is Lahore.”
@@ -115,6 +124,10 @@ domain. The Hobby plan has no billing cycle and requires no paid weather service
 5. Deploy and verify `/healthz`, `/readyz`, current weather, and forecast.
 6. Configure Dialogflow Fulfillment as `https://YOUR-PROJECT.vercel.app/webhook`.
 
+The current production deployment is already available at
+`https://atmos-dialogflow-weather-bot.vercel.app`, with fulfillment at
+`https://atmos-dialogflow-weather-bot.vercel.app/webhook`.
+
 Vercel deployments use the serverless entry point in `api/index.js`; local and
 Docker deployments continue to use `src/server.js` without behavior differences.
 
@@ -180,6 +193,9 @@ The tests use mocked weather-provider responses, so they do not consume API quot
 - Use `docs/ASSESSMENT_TRACEABILITY.md` to show where each line of the assessment is implemented.
 - Use `docs/SECURITY.md` for the backend threat boundaries and production controls.
 
-## Known external steps
+## Remaining account-owned steps
 
-The remaining account-owned steps are deploying into a hosting account, entering the final webhook URL in Dialogflow, recording a human voiceover, and sending the submission email. Everything needed for those steps is prepared here.
+Import the supplied agent ZIP into the evaluator-facing Dialogflow ES account,
+set its fulfillment URL to the production webhook above, record the human
+voiceover, and send the submission email. The application and API are already
+publicly deployed.
