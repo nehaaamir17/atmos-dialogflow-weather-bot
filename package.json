@@ -2,7 +2,7 @@
   "name": "dialogflow-es-weather-bot",
   "version": "1.0.0",
   "private": true,
-  "description": "Production-ready Dialogflow ES weather webhook backed by OpenWeather One Call 3.0",
+  "description": "Production-ready Dialogflow ES webhook using free OpenWeather and Open-Meteo APIs",
   "type": "module",
   "engines": {
     "node": ">=20"

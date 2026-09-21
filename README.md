@@ -23,14 +23,14 @@ sequenceDiagram
     actor User
     participant DF as Dialogflow ES
     participant API as Weather webhook
-    participant OW as OpenWeather Free APIs
-    participant OM as Open-Meteo
+    participant OW as OpenWeather Current API
+    participant OM as Open-Meteo Geocoding + Forecast
     User->>DF: Current weather / forecast request
     DF->>DF: Extract @sys.geo-city and @sys.date
     DF->>API: POST /webhook (WebhookRequest)
     API->>API: Validate request, session date, 8-day horizon
-    API->>OW: Geocode city (cached 24h)
-    OW-->>API: Coordinates
+    API->>OM: Resolve and validate city (cached 24h)
+    OM-->>API: Verified city + coordinates
     API->>OW: Current conditions (cached 5m)
     OW-->>API: Live current weather
     API->>OM: 8-day forecast (cached 5m)
@@ -39,13 +39,13 @@ sequenceDiagram
     DF-->>User: Human-readable weather result
 ```
 
-The default request path is `Dialogflow ES → HTTPS webhook → OpenWeather free Geocoding/Current Weather APIs + Open-Meteo eight-day forecast`. It requires no paid subscription. An optional `OPENWEATHER_ONE_CALL_ENABLED=true` mode remains available for evaluators who already have a separately activated One Call subscription.
+The default request path is `Dialogflow ES → HTTPS webhook → Open-Meteo city validation → OpenWeather free Current Weather API + Open-Meteo eight-day forecast`. It requires no paid subscription. An optional `OPENWEATHER_ONE_CALL_ENABLED=true` mode remains available for evaluators who already have a separately activated One Call subscription.
 
 ## Repository contents
 
 | Path | Purpose |
 |---|---|
-| `src/` | REST API, Dialogflow fulfillment, time-zone/date logic, OpenWeather client, formatting, logging |
+| `src/` | REST API, Dialogflow fulfillment, time-zone/date logic, weather-provider clients, formatting, logging |
 | `dialogflow-agent/` | Editable Dialogflow ES export source |
 | `dist/Weather-Info-Forecast-Bot.zip` | Importable Dialogflow ES agent generated from the source above |
 | `public/` | Live operations dashboard and API explorer |
@@ -66,7 +66,7 @@ npm test
 npm start
 ```
 
-Node.js does not load `.env` files automatically in this implementation. Use your shell, hosting platform variables, or Node's built-in flag:
+The included start script loads a local `.env` file when present. Values already set by your shell or hosting platform take precedence:
 
 ```bash
 npm start
@@ -135,12 +135,13 @@ The inclusive supported window is today through today + 7 days. This yields exac
 - Upstream calls are bounded below Dialogflow ES's five-second webhook deadline and retried once only for timeouts, rate limits, and server errors.
 - Geocoding is cached for 24 hours and weather for five minutes to reduce latency and API usage.
 - API keys stay server-side and the logger recursively redacts known credential fields.
+- City resolution honors country/state qualifiers and rejects low-confidence gazetteer entries that are not recognized cities; every response returns the interpreted location.
 - Optional constant-time webhook secret verification prevents unauthenticated fulfillment calls.
 - Per-client endpoint limits return standard HTTP 429 responses with `Retry-After` metadata.
 - Provider-specific circuit breakers fail quickly during incidents and automatically probe for recovery.
 - Versioned `/api/v1/weather/*` routes are available; the original paths remain compatible.
-- The zero-cost default uses OpenWeather for city geocoding and live current
-  conditions, with Open-Meteo for the eight-day forecast and automatic failover.
+- The zero-cost default uses Open-Meteo for strict city resolution and the
+  eight-day forecast, with OpenWeather for live current conditions.
 - Paid OpenWeather One Call requests are disabled by default and are made only
   when `OPENWEATHER_ONE_CALL_ENABLED=true` is deliberately configured.
 - Webhook failures return a valid Dialogflow text response with HTTP 200 so users receive a useful message instead of a generic fulfillment error.
@@ -154,7 +155,7 @@ npm run check
 npm test
 ```
 
-The tests use mocked OpenWeather responses, so they do not consume API quota or require credentials. A live smoke test is documented in `docs/SETUP.md`.
+The tests use mocked weather-provider responses, so they do not consume API quota or require credentials. A live smoke test is documented in `docs/SETUP.md`.
 
 ## Submission assets
 
